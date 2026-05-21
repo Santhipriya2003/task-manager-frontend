@@ -1,57 +1,39 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../config";
 
 function Login() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [error, setError] = useState("");
 
   // ================= LOGIN =================
-
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const res = await axios.post(
-        "http://localhost:8080/api/auth/login",
-        {
-          email,
-          password,
-        }
-      );
+  try {
+    const response = await axios.post(
+      "https://task-manager-backend-ovjq.onrender.com/api/auth/login",
+      {
+        email,
+        password,
+      }
+    );
 
-      console.log("LOGIN RESPONSE:", res.data);
+    localStorage.setItem("token", response.data.token);
 
-      // SAVE TOKEN
-      localStorage.setItem("token", res.data.token);
+    navigate("/dashboard");
 
-      // SAVE ROLE
-      localStorage.setItem("role", res.data.role);
-
-      // GO DASHBOARD
-      navigate("/dashboard");
-
-    } catch (err) {
-      console.log(err);
-
-      setError("Invalid email or password");
-    }
-  };
-
+  } catch (error) {
+    alert("Invalid email or password");
+  }
+};
   // ================= UI =================
-
   return (
-    <div
-      style={{
-        maxWidth: "300px",
-        margin: "auto",
-        marginTop: "100px",
-      }}
-    >
+    <div style={{ maxWidth: "300px", margin: "auto" }}>
       <h2>Login</h2>
 
       <form onSubmit={handleLogin}>
@@ -59,9 +41,7 @@ function Login() {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) =>
-            setEmail(e.target.value)
-          }
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
 
@@ -72,9 +52,7 @@ function Login() {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
 
