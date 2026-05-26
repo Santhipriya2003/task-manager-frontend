@@ -11,24 +11,41 @@ function Login() {
   const [error, setError] = useState("");
 
   // ================= LOGIN =================
-  const handleLogin = async (e) => {
+  
+
+const handleLogin = async (e) => {
+
   e.preventDefault();
 
   try {
+
+    console.log("LOGIN START");
+
     const response = await axios.post(
-      "https://task-manager-backend-ovjq.onrender.com/api/auth/login",
+      `${API_URL}/api/auth/login`,
       {
         email,
         password,
       }
     );
 
+    console.log("LOGIN RESPONSE:", response.data);
+
+    // SAVE TOKEN
     localStorage.setItem("token", response.data.token);
+
+    // SAVE ROLE
+    localStorage.setItem("role", response.data.role);
+
+    alert("Login Successful");
 
     navigate("/dashboard");
 
   } catch (error) {
-    alert("Invalid email or password");
+
+    console.log("FULL ERROR:", error);
+
+    alert("Login Failed");
   }
 };
   // ================= UI =================

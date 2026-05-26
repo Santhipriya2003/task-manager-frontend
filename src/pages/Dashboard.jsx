@@ -1,58 +1,58 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import API_URL from "../config";
 
 function Dashboard() {
+  const handleDelete = (id) => {
 
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this task?"
+  );
+
+  if(confirmDelete){
+    deleteTask(id);
+  }
+
+};
+  console.log("DASHBOARD LOADED");
   const navigate = useNavigate();
 
-  // ================= STATES =================
-
   const [tasks, setTasks] = useState([]);
-
   const [role, setRole] = useState("");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-
   const [dueDate, setDueDate] = useState("");
-
   const [priority, setPriority] = useState("");
 
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
 
   const token = localStorage.getItem("token");
 
   // ================= INIT =================
-
   useEffect(() => {
-
     const savedRole = localStorage.getItem("role");
+    console.log("ROLE FROM LOCALSTORAGE:", savedRole);
 
     if (!token) {
       navigate("/login");
       return;
     }
 
-    setRole(savedRole);
-
+    setRole(savedRole || "MEMBER");
+     console.log("API_URL =", API_URL);
     fetchTasks();
-
   }, []);
 
   // ================= FETCH TASKS =================
-
   const fetchTasks = async () => {
-
     try {
-
       setLoading(true);
 
       const res = await axios.get(
-        "http://localhost:8080/api/tasks",
+        `${API_URL}/api/tasks`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -60,42 +60,25 @@ function Dashboard() {
         }
       );
 
-      
-
       setTasks(res.data);
-
       setError("");
-
     } catch (err) {
-
-      
-
       setError("Failed to load tasks");
-
     } finally {
-
       setLoading(false);
     }
   };
 
   // ================= CREATE TASK =================
-
   const createTask = async () => {
-
-    if (
-      !title ||
-      !description ||
-      !dueDate ||
-      !priority
-    ) {
+    if (!title || !description || !dueDate || !priority) {
       alert("Please fill all fields");
       return;
     }
 
     try {
-
       const res = await axios.post(
-        "http://localhost:8080/api/tasks",
+        `${API_URL}/api/tasks`,
         {
           title,
           description,
@@ -118,55 +101,34 @@ function Dashboard() {
       setPriority("");
 
       alert("Task Created");
-
     } catch (err) {
-
-      
-
       setError("Task creation failed");
     }
   };
 
   // ================= DELETE TASK =================
-
   const deleteTask = async (id) => {
-
     try {
+      await axios.delete(`${API_URL}/api/tasks/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      await axios.delete(
-        `http://localhost:8080/api/tasks/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setTasks(
-        tasks.filter((task) => task.id !== id)
-      );
+      setTasks(tasks.filter((task) => task.id !== id));
 
       alert("Task Deleted");
-
     } catch (err) {
-
-      
-
       setError("Delete failed");
     }
   };
 
   // ================= UPDATE STATUS =================
-
   const updateStatus = async (id, status) => {
-
     try {
-
       const res = await axios.put(
-        `http://localhost:8080/api/tasks/${id}`,
-        {
-          status,
-        },
+        `${API_URL}/api/tasks/${id}`,
+        { status },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -179,32 +141,21 @@ function Dashboard() {
           task.id === id ? res.data : task
         )
       );
-
     } catch (err) {
-
-    
-
       setError("Status update failed");
     }
   };
 
   // ================= LOGOUT =================
-
   const logout = () => {
-
     localStorage.removeItem("token");
-
     localStorage.removeItem("role");
-
     navigate("/login");
   };
 
   // ================= UI =================
-
   return (
-
     <div style={{ padding: "20px" }}>
-
       <h1>Team Task Dashboard</h1>
 
       <p>
@@ -226,245 +177,176 @@ function Dashboard() {
 
       <hr />
 
-      {/* ================= DASHBOARD STATS ================= */}
+      <div>
+        <Link to="/tasks">
+          <button>Tasks Page</button>
+        </Link>
 
+        <Link to="/admin">
+          <button>Admin Page</button>
+        </Link>
+      </div>
+
+      {/* ================= STATS ================= */}
       <h3>Total Tasks: {tasks.length}</h3>
 
       <h3>
-        Completed Tasks: {
-          tasks.filter(
-            (t) => t.status === "DONE"
-          ).length
-        }
+        Completed Tasks:{" "}
+        {tasks.filter((t) => t.status === "DONE").length}
       </h3>
 
       <h3>
-        Pending Tasks: {
-          tasks.filter(
-            (t) => t.status === "TODO"
-          ).length
-        }
+        Pending Tasks:{" "}
+        {tasks.filter((t) => t.status === "TODO").length}
       </h3>
 
       <h3>
-        In Progress Tasks: {
-          tasks.filter(
-            (t) => t.status === "IN_PROGRESS"
-          ).length
-        }
+        In Progress Tasks:{" "}
+        {tasks.filter((t) => t.status === "IN_PROGRESS").length}
       </h3>
 
       <h3>
-        Overdue Tasks: {
-          tasks.filter(
-            (t) =>
-              t.dueDate &&
-              new Date(t.dueDate) < new Date() &&
-              t.status !== "DONE"
-          ).length
-        }
+        Overdue Tasks:{" "}
+        {tasks.filter(
+          (t) =>
+            t.dueDate &&
+            new Date(t.dueDate) < new Date() &&
+            t.status !== "DONE"
+        ).length}
       </h3>
 
       <hr />
 
-      {/* ================= ADMIN CREATE TASK ================= */}
-
+      {/* ================= CREATE TASK ================= */}
       {role === "ADMIN" && (
-
-        <div style={{ marginBottom: "20px" }}>
-
+        <div>
           <h2>Create Task</h2>
 
           <input
             type="text"
             placeholder="Task Title"
             value={title}
-            onChange={(e) =>
-              setTitle(e.target.value)
-            }
-            style={{
-              padding: "8px",
-              width: "300px",
-            }}
+            onChange={(e) => setTitle(e.target.value)}
           />
-
-          <br />
-          <br />
+          <br /><br />
 
           <textarea
-            placeholder="Task Description"
+            placeholder="Description"
             value={description}
-            onChange={(e) =>
-              setDescription(e.target.value)
-            }
-            style={{
-              padding: "8px",
-              width: "300px",
-              height: "100px",
-            }}
+            onChange={(e) => setDescription(e.target.value)}
           />
-
-          <br />
-          <br />
+          <br /><br />
 
           <input
             type="date"
             value={dueDate}
-            onChange={(e) =>
-              setDueDate(e.target.value)
-            }
+            onChange={(e) => setDueDate(e.target.value)}
           />
-
-          <br />
-          <br />
+          <br /><br />
 
           <select
             value={priority}
-            onChange={(e) =>
-              setPriority(e.target.value)
-            }
+            onChange={(e) => setPriority(e.target.value)}
           >
-            <option value="">
-              Select Priority
-            </option>
-
-            <option value="LOW">
-              LOW
-            </option>
-
-            <option value="MEDIUM">
-              MEDIUM
-            </option>
-
-            <option value="HIGH">
-              HIGH
-            </option>
+            <option value="">Select Priority</option>
+            <option value="LOW">LOW</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="HIGH">HIGH</option>
           </select>
 
-          <br />
-          <br />
+          <br /><br />
 
-          <button
-            onClick={createTask}
-            style={{
-              background: "green",
-              color: "white",
-              padding: "10px",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
+          <button onClick={createTask}>
             Create Task
           </button>
-
         </div>
       )}
 
       {/* ================= ERROR ================= */}
-
-      {error && (
-        <p style={{ color: "red" }}>
-          {error}
-        </p>
-      )}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       {/* ================= TASK LIST ================= */}
-
       <h2>Tasks</h2>
 
       {loading ? (
-
         <p>Loading...</p>
-
       ) : (
-
         tasks.map((task) => (
-
           <div
             key={task.id}
             style={{
               border: "1px solid #ccc",
-              padding: "15px",
-              marginBottom: "15px",
-              borderRadius: "5px",
+              margin: "10px",
+              padding: "10px",
             }}
           >
-
             <h3>{task.title}</h3>
-
             <p>{task.description}</p>
-
             <p>
-              <b>Status:</b> {task.status}
-            </p>
-
-            <p>
-              <b>Priority:</b> {task.priority}
-            </p>
-
-            <p>
-              <b>Due Date:</b> {task.dueDate}
-            </p>
-
-            {/* ================= UPDATE STATUS ================= */}
+                      Status:
+                       <span
+                       style={{
+                       color:
+                      task.status === "DONE"
+                      ? "green"
+                      : task.status === "IN_PROGRESS"
+                     ? "orange"
+                     : "red",
+                    fontWeight: "bold",
+                     marginLeft: "5px",
+    }}
+  >
+    {task.status}
+  </span>
+</p>
 
             {(role === "ADMIN" ||
               role === "EDITOR" ||
               role === "MEMBER") && (
-
               <select
                 value={task.status}
                 onChange={(e) =>
-                  updateStatus(
-                    task.id,
-                    e.target.value
-                  )
+                  updateStatus(task.id, e.target.value)
                 }
-                style={{
-                  padding: "5px",
-                }}
+                 style={{
+
+                    padding: "5px",
+                    marginTop: "10px",
+                    borderRadius: "5px",
+                    background:
+                    task.status === "DONE"
+                    ? "#d4edda"
+                  : task.status === "IN_PROGRESS"
+                  ? "#fff3cd"
+                  : "#f8d7da",
+                 }}
               >
-
-                <option value="TODO">
-                  TODO
-                </option>
-
-                <option value="IN_PROGRESS">
-                  IN PROGRESS
-                </option>
-
-                <option value="DONE">
-                  DONE
-                </option>
-
+                <option value="TODO">TODO</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="DONE">DONE</option>
               </select>
             )}
 
-            {/* ================= DELETE TASK ================= */}
-
             {role === "ADMIN" && (
-
               <button
-                onClick={() =>
-                  deleteTask(task.id)
-                }
-                style={{
-                  marginLeft: "10px",
-                  background: "black",
-                  color: "white",
-                  padding: "8px",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                Delete
-              </button>
+                onClick={() => handleDelete(task.id)}
+            style={{
+                       background: "red",
+                       color: "white",
+                       border: "none",
+                       padding: "8px 12px",
+                      marginTop: "10px",
+                      cursor: "pointer",
+                      borderRadius: "5px",
+  }}
+>
+  Delete
+</button>
+              
             )}
-
           </div>
         ))
       )}
-
     </div>
   );
 }
