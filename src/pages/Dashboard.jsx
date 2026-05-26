@@ -125,26 +125,27 @@ function Dashboard() {
 
   // ================= UPDATE STATUS =================
   const updateStatus = async (id, status) => {
-    try {
-      const res = await axios.put(
-        `${API_URL}/api/tasks/${id}`,
-        { status },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  try {
 
-      setTasks(
-        tasks.map((task) =>
-          task.id === id ? res.data : task
-        )
-      );
-    } catch (err) {
-      setError("Status update failed");
-    }
-  };
+    await axios.put(
+      `${API_URL}/api/tasks/${id}/status`,
+      { status },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    fetchTasks();
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert("Status update failed");
+  }
+};
 
   // ================= LOGOUT =================
   const logout = () => {
